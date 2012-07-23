@@ -36,6 +36,7 @@ Running:
 """
 
 import sys
+import csv
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -45,6 +46,36 @@ def usage():
     Usage: python hlproject.py userdata.txt
 
     """
+
+class Utils():
+  """ Random processing utilities.
+
+  """
+  @classmethod
+  def haversine_distance(cls, origin, destination):
+    """ Haversine formula implementation
+    http://www.platoscave.net/blog/2009/\
+        oct/5/calculate-distance-latitude-longitude-python/
+    Args:
+      origin(tuple): (lat, lon)
+      destination(tuple): (lat, lon)
+
+    Returns:
+      `float`
+    """
+    lat1, lon1 = origin
+    lat2, lon2 = destination
+    radius = 6371 # mean radius
+
+    dlat = math.radians(lat2-lat1)
+    dlon = math.radians(lon2-lon1)
+    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
+        * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = radius * c
+
+    return d 
+
 
 if __name__ == "__main__":
   try:
@@ -60,12 +91,19 @@ if __name__ == "__main__":
     logging.error('File not found.')
     exit()
 
-
+  results = []
   while True:
     cur = [c for c in csv_reader.readline().split('|') if c]
     logging.info(cur)
     if not cur:
       break
 
+  logging.info('Total: {0}'.format(len(results)))
+  tab_file = open('results.txt', 'wb')
+  tab_writer = csv.writer(tab_file, delimiter='|')
+  for row in results:
+    tab_writer.writerow(row)
 
+  tab_file.close()
+  logging.info('Done.')
 
