@@ -121,6 +121,24 @@ if __name__ == "__main__":
     except ValueError:
       continue
 
+    if u1 not in cache:
+      cache[u1] = {
+        'prev': [t1, la1, lo1],
+        'cur': [t1, la1, lo1],
+      }
+    else:
+      cache[u1]['prev'] = cache[u1]['cur']
+      cache[u1]['cur'] = [t1, la1, lo1]
+
+    if u2 not in cache:
+      cache[u2] = {
+        'prev': [t2, la2, lo2],
+        'cur': [t2, la2, lo2],
+      }
+    else:
+      cache[u2]['prev'] = cache[u2]['cur']
+      cache[u2]['cur'] = [t2, la2, lo2]
+
   logging.info('Total: {0}'.format(len(results)))
   tab_file = open('results.txt', 'wb')
   tab_writer = csv.writer(tab_file, delimiter='|')
