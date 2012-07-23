@@ -93,8 +93,9 @@ class Utils():
     isValid = False
 
     # the user points are <= 6 hours old at the time they are nearby
-    if ((state1['cur'][0] - state1['prev'][0]) <= SIX_HOURS) and \
-        ((state2['cur'][0] - state2['prev'][0]) <= SIX_HOURS):
+    connect_time = max(state1['cur'][0], state2['cur'][0])
+    if ((connect_time - state1['cur'][0]) <= SIX_HOURS) and \
+        ((connect_time - state2['cur'][0]) <= SIX_HOURS):
       distance = cls.haversine_distance(
         (state1['cur'][1], state1['cur'][2]), 
         (state2['cur'][1], state2['cur'][2])
