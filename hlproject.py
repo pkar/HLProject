@@ -40,6 +40,9 @@ import csv
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
+SIX_HOURS = 21600
+TW4_HOURS = 86400
+
 def usage():
   print \
     """
@@ -92,11 +95,31 @@ if __name__ == "__main__":
     exit()
 
   results = []
+  cache = {}
+  cache_connect = {}
   while True:
     cur = [c for c in csv_reader.readline().split('|') if c]
-    logging.info(cur)
-    if not cur:
+    nxt = [n for n in csv_reader.readline().split('|') if n]
+    # EOF
+    if not nxt:
       break
+
+    # Check if valid rows
+    if len(cur) != 4 or len(nxt) != 4:
+      logging.error('Invalid rows')
+      continue
+
+    u1, t1, la1, lo1 = cur
+    u2, t2, la2, lo2 = nxt
+    try:
+      t1 = int(t1)
+      la1 = float(la1)
+      lo1 = float(lo1)
+      t2 = int(t2)
+      la2 = float(la2)
+      lo2 = float(lo2)
+    except ValueError:
+      continue
 
   logging.info('Total: {0}'.format(len(results)))
   tab_file = open('results.txt', 'wb')
