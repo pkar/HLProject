@@ -37,6 +37,7 @@ Running:
 
 import sys
 import csv
+import math
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -78,6 +79,31 @@ class Utils():
     d = radius * c
 
     return d 
+
+  @classmethod
+  def meets_base_requirement(cls, state1, state2):
+    """
+    Args:
+      state1(dict): {cur: [timestamp, lat, lon], prev:[timestamp, lat, lon]}
+      state2(dict): {cur: [timestamp, lat, lon], prev:[timestamp, lat, lon]}
+
+    Returns:
+      `bool`
+    """
+    isValid = False
+
+    # the user points are <= 6 hours old at the time they are nearby
+    if ((state1['cur'][0] - state1['prev'][0]) <= SIX_HOURS) and \
+        ((state2['cur'][0] - state2['prev'][0]) <= SIX_HOURS):
+      distance = cls.haversine_distance(
+        (state1['cur'][1], state1['cur'][2]), 
+        (state2['cur'][1], state2['cur'][2])
+      )
+      # the user points are <= 150 meters are apart
+      if distance * 1000 <= 150:
+          isValid = True
+
+    return isValid
 
 
 if __name__ == "__main__":
@@ -138,6 +164,29 @@ if __name__ == "__main__":
     else:
       cache[u2]['prev'] = cache[u2]['cur']
       cache[u2]['cur'] = [t2, la2, lo2]
+
+    # Same user changing position
+    # Just update cache
+    if u1 == u2:
+      continue
+
+    if Utils.meets_base_requirement(cache[u1], cache[u2]):
+      connection = [t2, u1, la1, lo1, u2, la2, lo2]
+      key = ''
+      # Sort key
+      if u1 < u2:
+        key = u1 + u2
+      else:
+        key = u2 + u1
+
+      #the user hasn't had an encounter with the same user in the prior 24 hours
+      if key in cache_connect:
+        if (t2 - cache_connect[key]) >= TW4_HOURS:
+          results.append(connection)
+          cache_connect[key] = t2
+      else:
+        results.append(connection)
+        cache_connect[key] = t2
 
   logging.info('Total: {0}'.format(len(results)))
   tab_file = open('results.txt', 'wb')
