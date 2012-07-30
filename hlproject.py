@@ -126,25 +126,22 @@ if __name__ == "__main__":
   cache_connect = {}
   while True:
     cur = [c for c in csv_reader.readline().split('|') if c]
-    nxt = [n for n in csv_reader.readline().split('|') if n]
+
     # EOF
-    if not nxt:
+    if not cur:
       break
 
     # Check if valid rows
-    if len(cur) != 4 or len(nxt) != 4:
+    if len(cur) != 4:
       logging.error('Invalid rows')
       continue
 
     u1, t1, la1, lo1 = cur
-    u2, t2, la2, lo2 = nxt
+
     try:
       t1 = int(t1)
       la1 = float(la1)
       lo1 = float(lo1)
-      t2 = int(t2)
-      la2 = float(la2)
-      lo2 = float(lo2)
     except ValueError:
       continue
 
@@ -157,37 +154,26 @@ if __name__ == "__main__":
       cache[u1]['prev'] = cache[u1]['cur']
       cache[u1]['cur'] = [t1, la1, lo1]
 
-    if u2 not in cache:
-      cache[u2] = {
-        'prev': [t2, la2, lo2],
-        'cur': [t2, la2, lo2],
-      }
-    else:
-      cache[u2]['prev'] = cache[u2]['cur']
-      cache[u2]['cur'] = [t2, la2, lo2]
+    for u2 in [key for key in cache.keys() if key != u1]:
+      if Utils.meets_base_requirement(cache[u1], cache[u2]):
+        connection = [t1, u1, la1, lo1, u2, 
+          cache[u2]['cur'][1], cache[u2]['cur'][2]]
+        key = ''
+        # Sort key
+        if u1 < u2:
+          key = u1 + u2
+        else:
+          key = u2 + u1
 
-    # Same user changing position
-    # Just update cache
-    if u1 == u2:
-      continue
-
-    if Utils.meets_base_requirement(cache[u1], cache[u2]):
-      connection = [t2, u1, la1, lo1, u2, la2, lo2]
-      key = ''
-      # Sort key
-      if u1 < u2:
-        key = u1 + u2
-      else:
-        key = u2 + u1
-
-      #the user hasn't had an encounter with the same user in the prior 24 hours
-      if key in cache_connect:
-        if (t2 - cache_connect[key]) >= TW4_HOURS:
+        #the user hasn't had an encounter with the same user 
+        # in the prior 24 hours
+        if key in cache_connect:
+          if (t1 - cache_connect[key]) >= TW4_HOURS:
+            results.append(connection)
+            cache_connect[key] = t1
+        else:
           results.append(connection)
-          cache_connect[key] = t2
-      else:
-        results.append(connection)
-        cache_connect[key] = t2
+          cache_connect[key] = t1
 
   logging.info('Total: {0}'.format(len(results)))
   tab_file = open('results.txt', 'wb')
